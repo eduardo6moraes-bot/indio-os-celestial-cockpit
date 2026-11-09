@@ -1,6 +1,6 @@
 {
-  "summary":  "Implementation plan for Mundo Celestial - Jornada Orbital 3D aerospace simulation game featuring biometric startup, real-time MFD telemetry, and interactive cockpit controls.",
-  "updatedAt":  "2026-11-09T05:35:06.947308907Z",
+  "summary":  "Plano de implementação para a transição cinematográfica vídeo-para-3D (frame 00:19) e replicação exata do cockpit de Mundo Celestial: IndioOS para Meta Quest (WebXR), Mobile e Desktop, incluindo download do index.html único para Vercel.",
+  "updatedAt":  "2026-11-09T10:39:56.906207517Z",
   "requestFeedback":  true,
   "userFacing":  true
 }

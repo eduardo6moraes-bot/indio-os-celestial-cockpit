@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Mundo Celestial - Cockpit IndioOS</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-touch-callout: none;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #000205;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    /* TELEMETRIA SUPERIOR */
+    #avionics-bar {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      pointer-events: none;
+      display: none;
+      gap: 16px;
+      background: rgba(6, 10, 16, 0.94);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 4px;
+      padding: 6px 14px;
+      font-size: 11px;
+      color: #94a3b8;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
+      white-space: nowrap;
+    }
+    .data-pill {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .data-pill span.val {
+      color: #38bdf8;
+      font-weight: 700;
+    }
+
+    /* WAZE ESPACIAL // RETÍCULO FLUTUANTE DE MARTE */
+    #mars-nav-marker {
+      position: absolute;
+      z-index: 15;
+      pointer-events: none;
+      display: none;
+      transform: translate(-50%, -50%);
+    }
+    .nav-box {
+      border: 2px solid #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+      width: 54px;
+      height: 54px;
+      border-radius: 4px;
+      position: relative;
+    }
+    .nav-label {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(10, 18, 28, 0.9);
+      border: 1px solid #38bdf8;
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-size: 10px;
+      color: #38bdf8;
+      font-weight: bold;
+      white-space: nowrap;
+      letter-spacing: 1px;
+      font-family: monospace;
+    }
+
+    /* GUIA DE CORREÇÃO DE ROTA (SETA ESTILO GPS) */
+    #route-guidance {
+      position: absolute;
+      top: 65px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 15;
+      pointer-events: none;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid #38bdf8;
+      padding: 6px 18px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: monospace;
+      color: #f8fafc;
+      letter-spacing: 1.5px;
+      display: none;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+    }
+    #route-guidance.aligned {
+      border-color: #22c55e;
+      color: #22c55e;
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
+    }
+    #route-guidance.critical {
+      border-color: #ef4444;
+      color: #ef4444;
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+    }
+
+    /* LEGENDAS E VOZ DO CHARLES */
+    #cinematic-subtitle {
+      position: absolute;
+      bottom: 65px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      pointer-events: none;
+      background: rgba(4, 7, 12, 0.9);
+      border-left: 3px solid #38bdf8;
+      padding: 10px 20px;
+      border-radius: 2px;
+      max-width: 650px;
+      width: 90%;
+      text-align: left;
+      font-size: 13.5px;
+      line-height: 1.45;
+      color: #f8fafc;
+      box-shadow: 0 10px 35px rgba(0,0,0,0.85);
+      letter-spacing: 0.5px;
+    }
+    #cinematic-subtitle .tag {
+      font-size: 10px;
+      letter-spacing: 1.8px;
+      color: #38bdf8;
+      font-weight: 700;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    #sop-hint {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      font-size: 11px;
+      letter-spacing: 1.2px;
+      color: #94a3b8;
+      background: rgba(8, 12, 18, 0.85);
+      padding: 6px 14px;
+      border-radius: 3px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      pointer-events: none;
+      text-transform: uppercase;
+      white-space: nowrap;
+      display: none;
+    }
+
+    #skip-intro-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 25;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: #38bdf8;
+      padding: 6px 12px;
+      font-size: 10px;
+      letter-spacing: 1px;
+      border-radius: 3px;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+    #gyro-permission-btn {
+      position: absolute;
+      top: 50px;
+      right: 16px;
+      z-index: 25;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid #38bdf8;
+      color: #38bdf8;
+      padding: 6px 12px;
+      font-size: 10px;
+      letter-spacing: 1px;
+      border-radius: 3px;
+      cursor: pointer;
+      display: none;
+    }
+  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/webxr/VRButton.js"></script>
+</head>
+<body>
+  <div id="avionics-bar">
+    <div class="data-pill">STATUS: <span class="val" id="av-mode">STANDBY</span></div>
+    <div class="data-pill">DIST MARTE: <span class="val" id="av-dist">54.60M KM</span></div>
+    <div class="data-pill">DESVIO: <span class="val" id="av-err">00.0°</span></div>
+    <div class="data-pill">VEL: <span class="val" id="av-vel">0 M/S</span></div>
+  </div>
+
+  <div id="route-guidance">CALCULANDO JANELA DE TRANSFERÊNCIA...</div>
+
+  <div id="mars-nav-marker">
+    <div class="nav-box"></div>
+    <div class="nav-label" id="mars-marker-label">MARTE // 54.60M KM</div>
+  </div>
+
+  <div id="cinematic-subtitle">
+    <div class="tag" id="sub-tag">COMUNICAÇÃO TERRESTRE // CAPCOM</div>
+    <div id="sub-content">Base Alvorada: Plataforma de lançamento zero-um em contagem regressiva final.</div>
+  </div>
+
+  <div id="sop-hint">MANTENHA A PALMA NO LEITOR BIOMÉTRICO CENTRAL</div>
+  <button id="skip-intro-btn">PULAR INTRO</button>
+  <button id="gyro-permission-btn">ATIVAR GIROSCÓPIO</button>
+  <div id="canvas-container"></div>
+
+  <script>
+    /* =========================================================================
+       1. SISTEMA DE ÁUDIO REALISTA COM FILTRO DE RÁDIO
+       ========================================================================= */
+    let charlesVoice = null;
+    function pickBestVoice() {
+      if (!('speechSynthesis' in window)) return;
+      const voices = window.speechSynthesis.getVoices();
+      charlesVoice = voices.find(v => v.lang.includes('pt-BR') && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Neural') || v.name.includes('Luciana') || v.name.includes('Felipe')))
+        || voices.find(v => v.lang.includes('pt-BR'))
+        || voices.find(v => v.lang.startsWith('pt'));
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = pickBestVoice;
+      pickBestVoice();
+    }
+
+    const SoundSystem = {
+      ctx: null,
+      ventGain: null,
+      rocketGain: null,
+
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+          this.startCockpitAmbiance();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      },
+
+      startCockpitAmbiance() {
+        try {
+          const bufferSize = 2 * this.ctx.sampleRate;
+          const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+          const data = noiseBuffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.12;
+
+          const noise = this.ctx.createBufferSource();
+          noise.buffer = noiseBuffer;
+          noise.loop = true;
+
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(180, this.ctx.currentTime);
+
+          this.ventGain = this.ctx.createGain();
+          this.ventGain.gain.setValueAtTime(0.04, this.ctx.currentTime);
+
+          noise.connect(filter);
+          filter.connect(this.ventGain);
+
+          const hum = this.ctx.createOscillator();
+          hum.type = 'sine';
+          hum.frequency.setValueAtTime(400, this.ctx.currentTime);
+          const humGain = this.ctx.createGain();
+          humGain.gain.setValueAtTime(0.004, this.ctx.currentTime);
+          hum.connect(humGain);
+          humGain.connect(this.ventGain);
+
+          this.ventGain.connect(this.ctx.destination);
+          noise.start();
+          hum.start();
+        } catch(e) {}
+      },
+
+      playQuindar(intro = true) {
+        if (!this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(intro ? 2525 : 2475, this.ctx.currentTime);
+          gain.gain.setValueAtTime(0.001, this.ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.035, this.ctx.currentTime + 0.01);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.18);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.2);
+        } catch(e) {}
+      },
+
+      playSwitchClick() {
+        if (!this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(280, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.04);
+          gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.04);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.045);
+        } catch(e) {}
+      },
+
+      startRocketThrust() {
+        if (!this.ctx || this.rocketGain) return;
+        try {
+          this.rocketGain = this.ctx.createGain();
+          this.rocketGain.gain.setValueAtTime(0.001, this.ctx.currentTime);
+
+          const bufferSize = 2 * this.ctx.sampleRate;
+          const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+          const data = noiseBuffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1);
+
+          const noise = this.ctx.createBufferSource();
+          noise.buffer = noiseBuffer;
+          noise.loop = true;
+
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(75, this.ctx.currentTime);
+
+          noise.connect(filter);
+          filter.connect(this.rocketGain);
+
+          const sub = this.ctx.createOscillator();
+          sub.type = 'sine';
+          sub.frequency.setValueAtTime(36, this.ctx.currentTime);
+          sub.connect(this.rocketGain);
+
+          this.rocketGain.connect(this.ctx.destination);
+          noise.start();
+          sub.start();
+        } catch(e) {}
+      },
+
+      setRocketPower(power) {
+        if (!this.rocketGain || !this.ctx) return;
+        const vol = Math.max(0.001, Math.min(0.40, power * 0.40));
+        this.rocketGain.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.1);
+      },
+
+      stopRocketThrust() {
+        if (!this.rocketGain || !this.ctx) return;
+        this.rocketGain.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.8);
+      }
+    };
+
+    function speakNarration(sender, text) {
+      SoundSystem.init();
+      SoundSystem.playQuindar(true);
+
+      document.getElementById('sub-tag').innerText = sender;
+      document.getElementById('sub-content').innerText = text;
+
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const utter = new SpeechSynthesisUtterance(text);
+          utter.lang = 'pt-BR';
+          if (charlesVoice) utter.voice = charlesVoice;
+          utter.rate = 1.0;
+          utter.pitch = 0.95;
+          utter.onend = () => {
+            setTimeout(() => SoundSystem.playQuindar(false), 80);
+          };
+          window.speechSynthesis.speak(utter);
+        } catch(e) {}
+      }
+    }
+
+    /* =========================================================================
+       2. THREE.JS: ESTRUTURA HIERÁRQUICA E RENDERIZADOR
+       ========================================================================= */
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x000205, 0.0005);
+
+    // O RIG DA NAVE CONTÉM COCKPIT, ASSENTO, CÂMERA E CONTROLES
+    const shipRig = new THREE.Group();
+    scene.add(shipRig);
+
+    const camera = new THREE.PerspectiveCamera(82, window.innerWidth / window.innerHeight, 0.04, 5000);
+    const pilotEyePos = new THREE.Vector3(0, 1.25, 0);
+    camera.position.copy(pilotEyePos);
+    shipRig.add(camera);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+    renderer.shadowMap.enabled = true;
+    renderer.xr.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    try {
+      if (typeof VRButton !== 'undefined') {
+        document.body.appendChild(VRButton.createButton(renderer));
+      }
+    } catch(e) {}
+
+    // LUZES
+    const sunLight = new THREE.DirectionalLight(0xfff7ed, 3.2);
+    sunLight.position.set(20, 40, -30);
+    scene.add(sunLight);
+
+    const cabinUtilityLight = new THREE.PointLight(0xdbeafe, 0.1, 4.0);
+    cabinUtilityLight.position.set(0, 1.75, -0.22);
+    shipRig.add(cabinUtilityLight);
+
+    const engineReflectionLight = new THREE.PointLight(0xff6600, 0.0, 6.0);
+    engineReflectionLight.position.set(0, -0.4, 0.6);
+    shipRig.add(engineReflectionLight);
+
+    const launchTowerLight = new THREE.PointLight(0xef4444, 1.8, 35);
+    launchTowerLight.position.set(-7, 9, -12);
+    scene.add(launchTowerLight);
+
+    /* =========================================================================
+       3. AMBIENTE ESPACIAL: COORDENADAS REAIS DE MARTE E TERRA
+       ========================================================================= */
+    // Plataforma na Terra
+    const towerGeo = new THREE.BoxGeometry(1.4, 28, 1.4);
+    const towerMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.7, metalness: 0.6 });
+    const launchTower = new THREE.Mesh(towerGeo, towerMat);
+    launchTower.position.set(-7, 10, -12);
+    scene.add(launchTower);
+
+    const bridgeGeo = new THREE.BoxGeometry(6, 0.35, 1.4);
+    const bridgeMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.5, metalness: 0.8 });
+    const boardingBridge = new THREE.Mesh(bridgeGeo, bridgeMat);
+    boardingBridge.position.set(-3.5, 2.5, -4);
+    scene.add(boardingBridge);
+
+    // Terra
+    function createEarthTexture() {
+      const c = document.createElement('canvas');
+      c.width = 2048; c.height = 1024;
+      const ctx = c.getContext('2d');
+      const grad = ctx.createLinearGradient(0, 0, 0, 1024);
+      grad.addColorStop(0, '#020b18');
+      grad.addColorStop(0.5, '#071d3f');
+      grad.addColorStop(1, '#020914');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 2048, 1024);
+
+      ctx.fillStyle = '#1c2e24';
+      for (let i = 0; i < 90; i++) {
+        const cx = Math.random() * 2048;
+        const cy = 200 + Math.random() * 624;
+        const rad = 70 + Math.random() * 180;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, rad * 1.6, rad, Math.random() * Math.PI, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.38)';
+      for (let i = 0; i < 160; i++) {
+        const nx = Math.random() * 2048;
+        const ny = 100 + Math.random() * 824;
+        const nrad = 50 + Math.random() * 140;
+        ctx.beginPath();
+        ctx.arc(nx, ny, nrad, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      return new THREE.CanvasTexture(c);
+    }
+
+    const earthMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(130, 64, 64),
+      new THREE.MeshStandardMaterial({ map: createEarthTexture(), roughness: 0.7, metalness: 0.1 })
+    );
+    earthMesh.position.set(0, -155, -90);
+    earthMesh.rotation.x = 0.35;
+    scene.add(earthMesh);
+
+    // Estrelas de Alta Resolução
+    const starGeo = new THREE.BufferGeometry();
+    const starCount = 4000;
+    const starPos = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount * 3; i++) {
+      starPos[i] = (Math.random() - 0.5) * 2600;
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    const starField = new THREE.Points(starGeo, new THREE.PointsMaterial({ size: 1.2, color: 0xffffff, transparent: true, opacity: 0.9 }));
+    scene.add(starField);
+
+    // VETOR REAL DE MARTE (COORDENADA ORBITAL FIXA NO COSMOS)
+    // Inicialmente a 54.6 milhões de km em escala relativa de simulação
+    const marsWorldPos = new THREE.Vector3(140, 260, -1800);
+    const marsMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(32, 48, 48),
+      new THREE.MeshStandardMaterial({ color: 0xb93815, roughness: 0.75, emissive: 0x240803 })
+    );
+    marsMesh.position.copy(marsWorldPos);
+    scene.add(marsMesh);
+
+    /* =========================================================================
+       4. COCKPIT INDUSTRIAL E CONTROLES FÍSICOS
+       ========================================================================= */
+    const cockpitGroup = new THREE.Group();
+    shipRig.add(cockpitGroup);
+
+    // Assento
+    const seatBase = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.5, 0.68), new THREE.MeshStandardMaterial({ color: 0x090d14, roughness: 0.7 }));
+    seatBase.position.set(0, 0.45, 0);
+    cockpitGroup.add(seatBase);
+
+    const seatBack = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.92, 0.12), new THREE.MeshStandardMaterial({ color: 0x131924, roughness: 0.6 }));
+    seatBack.position.set(0, 1.05, 0.32);
+    cockpitGroup.add(seatBack);
+
+    // Para-brisa Curvo Balístico
+    const windshield = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.48, 1.62, 1.1, 36, 1, true, -Math.PI * 0.42, Math.PI * 0.84),
+      new THREE.MeshPhysicalMaterial({ color: 0x050c14, roughness: 0.04, transmission: 0.92, transparent: true, opacity: 0.28 })
+    );
+    windshield.position.set(0, 1.35, -0.62);
+    windshield.rotation.x = -0.28;
+    cockpitGroup.add(windshield);
+
+    // Pilares
+    const mainArch = new THREE.Mesh(new THREE.TorusGeometry(1.52, 0.045, 12, 36, Math.PI), new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.85, roughness: 0.3 }));
+    mainArch.position.set(0, 1.28, -0.65);
+    mainArch.rotation.x = 0.25;
+    cockpitGroup.add(mainArch);
+
+    // Console
+    const consoleTable = new THREE.Mesh(new THREE.BoxGeometry(1.72, 0.32, 0.88), new THREE.MeshStandardMaterial({ color: 0x0b0f17, roughness: 0.4, metalness: 0.8 }));
+    consoleTable.position.set(0, 0.82, -0.58);
+    consoleTable.rotation.x = 0.26;
+    cockpitGroup.add(consoleTable);
+
+    // Scanner Vortex ID
+    function createBiometricTexture() {
+      const c = document.createElement('canvas');
+      c.width = 256; c.height = 256;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#050a12';
+      ctx.fillRect(0, 0, 256, 256);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(20, 20, 216, 216);
+      ctx.strokeRect(55, 55, 146, 146);
+      ctx.font = 'bold 13px monospace';
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillText('VORTEX ID', 85, 135);
+      return new THREE.CanvasTexture(c);
+    }
+
+    const scannerPlate = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.015, 0.24), new THREE.MeshStandardMaterial({ color: 0x09111c, metalness: 0.85, map: createBiometricTexture() }));
+    scannerPlate.position.set(0, 0.165, 0.16);
+    consoleTable.add(scannerPlate);
+
+    const scannerLight = new THREE.PointLight(0x38bdf8, 0.9, 1.2);
+    scannerLight.position.set(0, 0.24, 0.16);
+    consoleTable.add(scannerLight);
+
+    const laserBeam = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.004, 0.012), new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.9 }));
+    laserBeam.position.set(0, 0.175, 0.05);
+    laserBeam.visible = false;
+    consoleTable.add(laserBeam);
+
+    // Orbe do Charles
+    const charlesGroup = new THREE.Group();
+    charlesGroup.position.set(0.65, 1.44, -0.64);
+    charlesGroup.visible = false;
+    cockpitGroup.add(charlesGroup);
+
+    const charlesCore = new THREE.Mesh(new THREE.SphereGeometry(0.055, 24, 24), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x0284c7, emissiveIntensity: 1.4 }));
+    charlesGroup.add(charlesCore);
+
+    const charlesRings = new THREE.Mesh(new THREE.SphereGeometry(0.082, 16, 16), new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true, transparent: true, opacity: 0.45 }));
+    charlesGroup.add(charlesRings);
+
+    const charlesLight = new THREE.PointLight(0x38bdf8, 0.0, 2.0);
+    charlesGroup.add(charlesLight);
+
+    // MFD MONITORES
+    function createMFDCanvas() {
+      const c = document.createElement('canvas');
+      c.width = 512; c.height = 320;
+      return c;
+    }
+
+    const canvasLeft = createMFDCanvas();
+    const ctxLeft = canvasLeft.getContext('2d');
+    const texLeft = new THREE.CanvasTexture(canvasLeft);
+
+    const canvasMid = createMFDCanvas();
+    const ctxMid = canvasMid.getContext('2d');
+    const texMid = new THREE.CanvasTexture(canvasMid);
+
+    const canvasRight = createMFDCanvas();
+    const ctxRight = canvasRight.getContext('2d');
+    const texRight = new THREE.CanvasTexture(canvasRight);
+
+    const mfdGeo = new THREE.PlaneGeometry(0.42, 0.26);
+    const mfdScreenMat = { roughness: 0.1, metalness: 0.1 };
+
+    const screenLeft = new THREE.Mesh(mfdGeo, new THREE.MeshStandardMaterial({ ...mfdScreenMat, map: texLeft }));
+    screenLeft.position.set(-0.52, 0.25, -0.08);
+    consoleTable.add(screenLeft);
+
+    const screenMid = new THREE.Mesh(mfdGeo, new THREE.MeshStandardMaterial({ ...mfdScreenMat, map: texMid }));
+    screenMid.position.set(0, 0.25, -0.08);
+    consoleTable.add(screenMid);
+
+    const screenRight = new THREE.Mesh(mfdGeo, new THREE.MeshStandardMaterial({ ...mfdScreenMat, map: texRight }));
+    screenRight.position.set(0.52, 0.25, -0.08);
+    consoleTable.add(screenRight);
+
+    // CONTROLES FÍSICOS
+    const interactiveControls = [];
+
+    const coverPivot = new THREE.Group();
+    coverPivot.position.set(0.28, 0.175, 0.13);
+    const coverBox = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.03, 0.085), new THREE.MeshStandardMaterial({ color: 0x991b1b, transparent: true, opacity: 0.92 }));
+    coverBox.position.set(0, 0.015, 0.038);
+    coverPivot.add(coverBox);
+    coverPivot.userData = { type: 'cover', isOpen: false };
+    consoleTable.add(coverPivot);
+    interactiveControls.push(coverPivot);
+
+    const ignBtnMat = new THREE.MeshStandardMaterial({ color: 0x7f1d1d, emissive: 0x200505 });
+    const ignitionButton = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.024, 24), ignBtnMat);
+    ignitionButton.position.set(0.28, 0.162, 0.17);
+    ignitionButton.userData = { type: 'ignition' };
+    consoleTable.add(ignitionButton);
+    interactiveControls.push(ignitionButton);
+
+    const throttleHandle = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.06, 0.045), new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.85 }));
+    throttleHandle.position.set(0.66, 0.20, 0.15);
+    throttleHandle.userData = { type: 'throttle' };
+    consoleTable.add(throttleHandle);
+    interactiveControls.push(throttleHandle);
+
+    // MANCHE ARTICULADO (JOYSTICK)
+    const stickPivot = new THREE.Group();
+    stickPivot.position.set(0, 0.175, 0.32);
+
+    const stickShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.012, 0.18), new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.9 }));
+    stickShaft.position.set(0, 0.09, 0);
+    stickPivot.add(stickShaft);
+
+    const stickGrip = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.09, 0.05), new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.5 }));
+    stickGrip.position.set(0, 0.09, 0);
+    stickShaft.add(stickGrip);
+
+    stickPivot.userData = { type: 'joystick' };
+    consoleTable.add(stickPivot);
+    interactiveControls.push(stickPivot);
+
+    /* =========================================================================
+       5. SISTEMA CINEMÁTICO INICIAL
+       ========================================================================= */
+    let gameState = 'CINEMATIC_INTRO';
+    let cinematicTime = 0;
+    const CINEMATIC_DURATION = 14.0;
+
+    let narratedStage1 = false;
+    let narratedStage2 = false;
+    let narratedStage3 = false;
+
+    const pOutside = new THREE.Vector3(-4.5, 4.2, -6.5);
+    const lookOutside = new THREE.Vector3(0, 1.5, -1.0);
+    const pEntry = new THREE.Vector3(0, 1.9, 1.8);
+    const lookEntry = new THREE.Vector3(0, 1.1, -0.6);
+    const pCockpitInspect = new THREE.Vector3(0.3, 1.55, 0.8);
+    const lookInspect = new THREE.Vector3(-0.2, 0.9, -0.5);
+    const pSeated = pilotEyePos.clone();
+    const lookSeated = new THREE.Vector3(0, 1.05, -0.6);
+
+    const tempCamTarget = new THREE.Vector3();
+
+    function completeCinematicTransition() {
+      gameState = 'GAMEPLAY';
+      camera.position.copy(pilotEyePos);
+      document.getElementById('skip-intro-btn').style.display = 'none';
+      document.getElementById('avionics-bar').style.display = 'flex';
+      document.getElementById('sop-hint').style.display = 'block';
+      document.getElementById('route-guidance').style.display = 'block';
+
+      speakNarration("DIRETOR DE VOO // CHARLES", "Aguardando sua palma no console para autenticação biométrica, Professor");
+
+      if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        document.getElementById('gyro-permission-btn').style.display = 'block';
+      }
+    }
+
+    document.getElementById('skip-intro-btn').addEventListener('click', completeCinematicTransition);
+
+    /* =========================================================================
+       6. FÍSICA REAL DE NAVEGAÇÃO, ATITUDE E WAZE ESPACIAL
+       ========================================================================= */
+    let systemsOnline = false;
+    let isScanning = false;
+    let scanDuration = 0;
+
+    let flightStage = 'GROUND'; // GROUND -> ASCENT -> CRUISE -> LOST_ORBIT
+    let throttleTarget = 0.0;
+    let throttleActual = 0.0;
+
+    // FÍSICA DE ATITUDE DA NAVE (PILOTAGEM REAL COM O MANCHE)
+    let shipYaw = 0.0;
+    let shipPitch = 0.0;
+    let shipRoll = 0.0;
+
+    let stickInputX = 0.0;
+    let stickInputY = 0.0;
+
+    // DINÂMICA DE DESLOCAMENTO
+    let velocity = 0.0; // km/s
+    let deltaV = 9420; // m/s
+    let distanceToMars = 54600000; // km reais
+    let routeDeviationAngle = 0.0; // Graus de erro de alinhamento
+    let warningCooldown = 0;
+
+    // VETOR PARA O WAZE ESPACIAL
+    const marsScreenPos = new THREE.Vector3();
+
+    function renderMFDScreens() {
+      // PFD ESQUERDO: COORDENADAS E VETORES REAIS
+      ctxLeft.fillStyle = systemsOnline ? '#050b14' : '#020408';
+      ctxLeft.fillRect(0, 0, 512, 320);
+      ctxLeft.strokeStyle = systemsOnline ? '#38bdf8' : '#1e293b';
+      ctxLeft.strokeRect(6, 6, 500, 308);
+      ctxLeft.font = 'bold 15px monospace';
+      ctxLeft.fillStyle = systemsOnline ? '#38bdf8' : '#334155';
+      ctxLeft.fillText('PFD // DINÂMICA VETORIAL DE VOO', 20, 32);
+
+      if (systemsOnline) {
+        ctxLeft.font = '13.5px monospace';
+        ctxLeft.fillStyle = '#94a3b8';
+        ctxLeft.fillText(`VELOCIDADE   : ${(velocity * 3600).toFixed(0)} KM/H (${velocity.toFixed(2)} KM/S)`, 20, 75);
+        ctxLeft.fillText(`DELTA-V SALDO: ${deltaV.toFixed(0)} M/S`, 20, 110);
+        ctxLeft.fillText(`ANG. GUINADA : ${(shipYaw * 57.3).toFixed(1)}°`, 20, 145);
+        ctxLeft.fillText(`ANG. ARFAGEM : ${(shipPitch * 57.3).toFixed(1)}°`, 20, 180);
+
+        ctxLeft.fillStyle = routeDeviationAngle < 8 ? '#22c55e' : (routeDeviationAngle < 20 ? '#facc15' : '#ef4444');
+        ctxLeft.fillText(`DESVIO ROTA  : ${routeDeviationAngle.toFixed(1)}° (${routeDeviationAngle < 8 ? 'ALINHADO' : 'CORREÇÃO NECESSÁRIA'})`, 20, 220);
+
+        ctxLeft.fillStyle = '#38bdf8';
+        ctxLeft.fillText(`ALVO DE NAVEGAÇÃO: MARTE [TMI LOCK]`, 20, 260);
+      } else {
+        ctxLeft.fillStyle = '#334155';
+        ctxLeft.fillText('SISTEMA EM STANDBY', 160, 160);
+      }
+      texLeft.needsUpdate = true;
+
+      // NAVBALL CENTRAL (REPRESENTAÇÃO 3D DA ESFERA ARTIFICIAL)
+      ctxMid.fillStyle = systemsOnline ? '#050b14' : '#020408';
+      ctxMid.fillRect(0, 0, 512, 320);
+      ctxMid.strokeStyle = systemsOnline ? '#38bdf8' : '#1e293b';
+      ctxMid.strokeRect(6, 6, 500, 308);
+      ctxMid.font = 'bold 15px monospace';
+      ctxMid.fillStyle = systemsOnline ? '#38bdf8' : '#334155';
+      ctxMid.fillText('ADI // HORIZONTE INERCIAL NAVBALL', 20, 32);
+
+      if (systemsOnline) {
+        ctxMid.save();
+        ctxMid.translate(256, 160);
+        ctxMid.rotate(-shipRoll);
+
+        const pY = shipPitch * 140;
+        ctxMid.fillStyle = '#0f2942';
+        ctxMid.beginPath(); ctxMid.arc(0, pY, 90, Math.PI, 0, false); ctxMid.fill();
+        ctxMid.fillStyle = '#261912';
+        ctxMid.beginPath(); ctxMid.arc(0, pY, 90, 0, Math.PI, false); ctxMid.fill();
+        ctxMid.strokeStyle = '#ffffff';
+        ctxMid.lineWidth = 2;
+        ctxMid.beginPath(); ctxMid.moveTo(-90, pY); ctxMid.lineTo(90, pY); ctxMid.stroke();
+        ctxMid.restore();
+
+        // Retículo central fixo
+        ctxMid.strokeStyle = '#facc15';
+        ctxMid.lineWidth = 3;
+        ctxMid.beginPath();
+        ctxMid.moveTo(216, 160); ctxMid.lineTo(246, 160);
+        ctxMid.moveTo(266, 160); ctxMid.lineTo(296, 160);
+        ctxMid.stroke();
+      } else {
+        ctxMid.fillStyle = '#334155';
+        ctxMid.fillText('NAVBALL DESLIGADA', 180, 160);
+      }
+      texMid.needsUpdate = true;
+
+      // MFD DIREITO: WAZE ESPACIAL // COORDENADAS ORBITAIS
+      ctxRight.fillStyle = systemsOnline ? '#050b14' : '#020408';
+      ctxRight.fillRect(0, 0, 512, 320);
+      ctxRight.strokeStyle = systemsOnline ? '#38bdf8' : '#1e293b';
+      ctxRight.strokeRect(6, 6, 500, 308);
+      ctxRight.font = 'bold 15px monospace';
+      ctxRight.fillStyle = systemsOnline ? '#38bdf8' : '#334155';
+      ctxRight.fillText('SPACE-WAZE // TRAJETÓRIA HOHMANN', 20, 32);
+
+      if (systemsOnline) {
+        ctxRight.font = '13.5px monospace';
+        ctxRight.fillStyle = '#e2e8f0';
+        ctxRight.fillText(`DISTÂNCIA ATUAL : ${(distanceToMars / 1000000).toFixed(2)}M KM`, 20, 75);
+        ctxRight.fillText(`EMPUXO ATUAL    : ${(throttleActual * 100).toFixed(0)} %`, 20, 110);
+
+        ctxRight.fillStyle = '#38bdf8';
+        ctxRight.fillText(`CORREDOR SEGURO : ± 12.0° DE TOLERÂNCIA`, 20, 150);
+
+        if (flightStage === 'LOST_ORBIT') {
+          ctxRight.fillStyle = '#ef4444';
+          ctxRight.fillText(`ESTADO: DERIVA NO VÁCUO (ROTA PERDIDA)`, 20, 195);
+        } else if (routeDeviationAngle > 18) {
+          ctxRight.fillStyle = '#ef4444';
+          ctxRight.fillText(`ALERTA: RISCO CRÍTICO DE PERDA DE JANELA`, 20, 195);
+        } else {
+          ctxRight.fillStyle = '#22c55e';
+          ctxRight.fillText(`ESTADO: TRANSFERÊNCIA MARTE NOMINAL`, 20, 195);
+        }
+
+        ctxRight.fillStyle = '#94a3b8';
+        ctxRight.fillText(`ETA ESTIMADO    : ${(distanceToMars / (Math.max(velocity, 0.01) * 3600 * 24)).toFixed(0)} DIAS`, 20, 240);
+      } else {
+        ctxRight.fillStyle = '#334155';
+        ctxRight.fillText('TELEMETRIA INATIVA', 170, 160);
+      }
+      texRight.needsUpdate = true;
+    }
+
+    /* =========================================================================
+       7. CONTROLE FÍSICO COM O MANCHE E O TOQUE
+       ========================================================================= */
+    const raycaster = new THREE.Raycaster();
+    const pointerVector = new THREE.Vector2();
+    let isPointerDown = false;
+    let prevPointerX = 0;
+    let prevPointerY = 0;
+    let activeControl = null;
+
+    // Olhar da cabeça do piloto
+    let headYaw = 0;
+    let headPitch = -0.15;
+    let targetYaw = 0;
+    let targetPitch = -0.15;
+
+    let gyroActive = false;
+    function handleOrientation(event) {
+      if (event.beta === null || event.gamma === null) return;
+      gyroActive = true;
+      const b = (event.beta - 45) * (Math.PI / 180);
+      const g = event.gamma * (Math.PI / 180);
+      targetPitch = Math.max(-0.65, Math.min(0.75, -b * 0.7));
+      targetYaw = Math.max(-1.1, Math.min(1.1, -g * 0.7));
+    }
+
+    const gyroBtn = document.getElementById('gyro-permission-btn');
+    gyroBtn.addEventListener('click', () => {
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission().then(state => {
+          if (state === 'granted') {
+            window.addEventListener('deviceorientation', handleOrientation);
+            gyroBtn.style.display = 'none';
+          }
+        });
+      } else {
+        window.addEventListener('deviceorientation', handleOrientation);
+        gyroBtn.style.display = 'none';
+      }
+    });
+
+    function startBiometric() {
+      if (systemsOnline) return;
+      isScanning = true;
+      laserBeam.visible = true;
+      document.getElementById('sop-hint').innerText = 'AUTENTICANDO BIOMETRIA... AGUARDE';
+    }
+
+    function cancelBiometric() {
+      if (systemsOnline) return;
+      isScanning = false;
+      scanDuration = 0;
+      laserBeam.visible = false;
+      document.getElementById('sop-hint').innerText = 'MANTENHA A PALMA NO LEITOR BIOMÉTRICO CENTRAL';
+    }
+
+    window.addEventListener('pointerdown', (e) => {
+      SoundSystem.init();
+      if (gameState === 'CINEMATIC_INTRO') return;
+
+      isPointerDown = true;
+      prevPointerX = e.clientX;
+      prevPointerY = e.clientY;
+
+      pointerVector.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pointerVector.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(pointerVector, camera);
+      const hits = raycaster.intersectObjects([scannerPlate, ...interactiveControls], true);
+
+      if (hits.length > 0) {
+        let obj = hits[0].object;
+        while (obj.parent && !obj.userData.type && obj !== scannerPlate) obj = obj.parent;
+
+        if (obj === scannerPlate) {
+          startBiometric();
+          return;
+        }
+
+        const data = obj.userData;
+        if (!data || !data.type) return;
+
+        if (data.type === 'cover') {
+          SoundSystem.playSwitchClick();
+          data.isOpen = !data.isOpen;
+          coverPivot.rotation.x = data.isOpen ? -Math.PI * 0.70 : 0.0;
+        } else if (data.type === 'ignition') {
+          if (!systemsOnline) {
+            speakNarration("DIRETOR DE VOO // CHARLES", "Atenção: Destrave os sistemas no leitor biométrico primeiro");
+            return;
+          }
+          if (!coverPivot.userData.isOpen) {
+            speakNarration("DIRETOR DE VOO // CHARLES", "Abra a proteção vermelha antes de comandar a ignição");
+            return;
+          }
+          if (flightStage === 'GROUND') {
+            SoundSystem.playSwitchClick();
+            ignitionButton.position.y = 0.152;
+            setTimeout(() => { ignitionButton.position.y = 0.162; }, 180);
+
+            flightStage = 'ASCENT';
+            SoundSystem.startRocketThrust();
+            throttleTarget = 1.0;
+            speakNarration("DIRETOR DE VOO // CHARLES", "Ignição confirmada, Professor. Câmaras em pressão nominal. Mantenha o manche alinhado com o retículo de Marte");
+            document.getElementById('av-mode').innerText = 'PROPULSÃO ATIVA';
+            document.getElementById('sop-hint').innerText = 'PILOTE PELO MANCHE E MANTENHA O ALINHAMENTO COM MARTE';
+          }
+        } else if (data.type === 'throttle' || data.type === 'joystick') {
+          activeControl = data.type;
+        }
+      }
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!isPointerDown || gameState === 'CINEMATIC_INTRO') return;
+      const dx = e.clientX - prevPointerX;
+      const dy = e.clientY - prevPointerY;
+      prevPointerX = e.clientX;
+      prevPointerY = e.clientY;
+
+      if (activeControl === 'throttle') {
+        throttleTarget = Math.max(0.0, Math.min(1.0, throttleTarget - dy * 0.006));
+        throttleHandle.position.z = 0.15 - (throttleTarget * 0.16);
+      } else if (activeControl === 'joystick' || (flightStage !== 'GROUND' && isPointerDown && !activeControl)) {
+        // MOVIMENTO REAL DO MANCHE NO ESPAÇO
+        stickInputX = Math.max(-1.0, Math.min(1.0, stickInputX + dx * 0.01));
+        stickInputY = Math.max(-1.0, Math.min(1.0, stickInputY + dy * 0.01));
+
+        stickPivot.rotation.z = -stickInputX * 0.35;
+        stickPivot.rotation.x = stickInputY * 0.35;
+      } else if (!gyroActive && !renderer.xr.isPresenting) {
+        // Movimento da cabeça do piloto na cabine
+        targetYaw -= dx * 0.0035;
+        targetPitch -= dy * 0.0035;
+        targetPitch = Math.max(-0.65, Math.min(0.65, targetPitch));
+        targetYaw = Math.max(-1.2, Math.min(1.2, targetYaw));
+      }
+    });
+
+    window.addEventListener('pointerup', () => {
+      isPointerDown = false;
+      activeControl = null;
+      // Retorno elástico suave do manche para o centro
+      stickInputX = 0;
+      stickInputY = 0;
+      stickPivot.rotation.set(0, 0, 0);
+      cancelBiometric();
+    });
+
+    // TECLAS DE CONTROLE (PC / TECLADO)
+    window.addEventListener('keydown', (e) => {
+      if (flightStage === 'GROUND') return;
+      if (e.key === 'a' || e.key === 'ArrowLeft') stickInputX = -0.7;
+      if (e.key === 'd' || e.key === 'ArrowRight') stickInputX = 0.7;
+      if (e.key === 'w' || e.key === 'ArrowUp') stickInputY = -0.7;
+      if (e.key === 's' || e.key === 'ArrowDown') stickInputY = 0.7;
+      stickPivot.rotation.z = -stickInputX * 0.35;
+      stickPivot.rotation.x = stickInputY * 0.35;
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (['a', 'd', 'ArrowLeft', 'ArrowRight'].includes(e.key)) stickInputX = 0;
+      if (['w', 's', 'ArrowUp', 'ArrowDown'].includes(e.key)) stickInputY = 0;
+      stickPivot.rotation.z = -stickInputX * 0.35;
+      stickPivot.rotation.x = stickInputY * 0.35;
+    });
+
+    /* =========================================================================
+       8. LOOP PRINCIPAL DE SIMULAÇÃO
+       ========================================================================= */
+    const clock = new THREE.Clock();
+
+    renderer.setAnimationLoop(() => {
+      const delta = Math.min(clock.getDelta(), 0.08);
+      const time = clock.getElapsedTime();
+
+      launchTowerLight.intensity = 1.2 + Math.sin(time * 6) * 0.8;
+
+      // -------------------------------------------------------------
+      // MODO CINEMÁTICO INICIAL
+      // -------------------------------------------------------------
+      if (gameState === 'CINEMATIC_INTRO') {
+        cinematicTime += delta;
+        const progress = Math.min(1.0, cinematicTime / CINEMATIC_DURATION);
+
+        if (progress < 0.30) {
+          const t = progress / 0.30;
+          camera.position.lerpVectors(pOutside, pEntry, t * 0.8);
+          tempCamTarget.lerpVectors(lookOutside, lookEntry, t);
+          camera.lookAt(tempCamTarget);
+
+          if (!narratedStage1 && cinematicTime > 0.8) {
+            narratedStage1 = true;
+            speakNarration("CENTRO DE CONTROLE // CAPCOM", "Base Alvorada para cápsula Indio-Um. Condições meteorológicas nominais na plataforma");
+          }
+        } else if (progress < 0.70) {
+          const t = (progress - 0.30) / 0.40;
+          camera.position.lerpVectors(pEntry, pCockpitInspect, t);
+          tempCamTarget.lerpVectors(lookEntry, lookInspect, t);
+          camera.lookAt(tempCamTarget);
+
+          if (!narratedStage2 && cinematicTime > 4.5) {
+            narratedStage2 = true;
+            speakNarration("SISTEMAS INTERNOS // TELEMETRIA", "Pressurização de eclusa concluída. Cabine em 101.3 kilopascals");
+          }
+        } else {
+          const t = (progress - 0.70) / 0.30;
+          camera.position.lerpVectors(pCockpitInspect, pSeated, t);
+          tempCamTarget.lerpVectors(lookInspect, lookSeated, t);
+          camera.lookAt(tempCamTarget);
+
+          if (!narratedStage3 && cinematicTime > 9.8) {
+            narratedStage3 = true;
+            speakNarration("DIRETOR DE VOO // CHARLES", "Comandante na estação. Sistemas aguardando autenticação biométrica");
+          }
+        }
+
+        if (progress >= 1.0) completeCinematicTransition();
+      }
+      // -------------------------------------------------------------
+      // MODO GAMEPLAY REAL COM DINÂMICA DE ROTA
+      // -------------------------------------------------------------
+      else {
+        // Câmera do piloto (Pesquisa visual interna)
+        if (!renderer.xr.isPresenting) {
+          headYaw += (targetYaw - headYaw) * 0.12;
+          headPitch += (targetPitch - headPitch) * 0.12;
+          camera.rotation.set(0, 0, 0);
+          camera.rotation.order = 'YXZ';
+          camera.rotation.y = headYaw;
+          camera.rotation.x = headPitch;
+        }
+
+        // BIOMETRIA (3s)
+        if (isScanning && !systemsOnline) {
+          scanDuration += delta;
+          laserBeam.position.z = 0.16 + Math.sin(time * 14) * 0.08;
+
+          if (scanDuration >= 3.0) {
+            systemsOnline = true;
+            isScanning = false;
+            laserBeam.visible = false;
+            cabinUtilityLight.intensity = 1.9;
+            scannerLight.color.setHex(0x10b981);
+            ignBtnMat.emissive.setHex(0xb91c1c);
+
+            charlesGroup.visible = true;
+            charlesLight.intensity = 2.0;
+            speakNarration("DIRETOR DE VOO // CHARLES", "Identidade confirmada, Professor. Sistemas de rota conectados. Trajetória calculada para Marte");
+
+            document.getElementById('av-mode').innerText = 'ONLINE';
+            document.getElementById('sop-hint').innerText = 'LEVANTE A PROTEÇÃO VERMELHA E ACIONE A IGNIÇÃO';
+          }
+        }
+
+        // FÍSICA REAL DE PILOTAGEM E VETOR NO ESPAÇO
+        if (flightStage !== 'GROUND') {
+          // O MANCHE GIRA A NAVE INTEIRA EM 3D
+          const turnRate = 0.65 * delta;
+          shipYaw -= stickInputX * turnRate;
+          shipPitch -= stickInputY * turnRate;
+          shipRoll = -stickInputX * 0.4;
+
+          shipRig.rotation.set(0, 0, 0);
+          shipRig.rotation.order = 'YXZ';
+          shipRig.rotation.y = shipYaw;
+          shipRig.rotation.x = shipPitch;
+          shipRig.rotation.z = shipRoll;
+
+          // CONTROLE DO ACELERADOR
+          throttleActual += (throttleTarget - throttleActual) * delta * 2.0;
+          SoundSystem.setRocketPower(throttleActual);
+
+          // Aceleração
+          velocity += throttleActual * 0.052 * delta;
+          deltaV = Math.max(0, deltaV - (throttleActual * 85 * delta));
+
+          // CÁLCULO DO VETOR PARA MARTE (SPACE-WAZE)
+          // Vetor frente da nave em coordenadas globais
+          const shipForward = new THREE.Vector3(0, 0, -1).applyQuaternion(shipRig.quaternion);
+
+          // Vetor da nave em direção a Marte
+          const vectorToMars = marsWorldPos.clone().sub(shipRig.position).normalize();
+
+          // Ângulo de desvio em graus
+          const dotProduct = Math.max(-1, Math.min(1, shipForward.dot(vectorToMars)));
+          routeDeviationAngle = Math.acos(dotProduct) * (180 / Math.PI);
+
+          // PROGRESSO REAL DE DISTÂNCIA
+          if (routeDeviationAngle < 15.0 && throttleActual > 0.1) {
+            // Nave alinhada: queima aproxima de Marte
+            const travelProgress = (velocity * 480000) * delta;
+            distanceToMars = Math.max(1200, distanceToMars - travelProgress);
+
+            // Marte se aproxima visualmente da nave
+            marsWorldPos.z += delta * 15;
+            marsMesh.position.copy(marsWorldPos);
+          } else if (routeDeviationAngle >= 25.0 && throttleActual > 0.5) {
+            // Nave fora de rota: queima desperdiça combustível e afasta a nave
+            distanceToMars += (velocity * 120000) * delta;
+          }
+
+          // CONSEQUÊNCIA DE DERIVA TOTAL
+          if (deltaV <= 0 && distanceToMars > 500000) {
+            if (flightStage !== 'LOST_ORBIT') {
+              flightStage = 'LOST_ORBIT';
+              throttleTarget = 0.0;
+              SoundSystem.stopRocketThrust();
+              speakNarration("DIRETOR DE VOO // CHARLES", "Atenção crítica: Combustível esgotado fora da janela de transferência. Entramos em deriva permanente no vácuo");
+              document.getElementById('av-mode').innerText = 'DERIVA ESPACIAL';
+            }
+          }
+
+          // AVISOS PERIÓDICOS DO CHARLES CONFORME O DESVIO
+          warningCooldown -= delta;
+          if (warningCooldown <= 0 && flightStage !== 'LOST_ORBIT') {
+            if (routeDeviationAngle > 30.0) {
+              speakNarration("DIRETOR DE VOO // CHARLES", "Atenção: Desvio grave de rota. Traga o manche na direção da mira de Marte para não perder a trajetória");
+              warningCooldown = 12.0;
+            } else if (routeDeviationAngle < 5.0 && throttleActual > 0.8) {
+              speakNarration("DIRETOR DE VOO // CHARLES", "Vetor perfeitamente alinhado. Injeção trans-marciana nominal");
+              warningCooldown = 20.0;
+            }
+          }
+
+          // ATUALIZAÇÃO DO HUD DO WAZE ESPACIAL
+          const guideEl = document.getElementById('route-guidance');
+          if (routeDeviationAngle < 8.0) {
+            guideEl.className = 'aligned';
+            guideEl.innerText = `ROTA CORRETA // VETOR DE MARTE TRAVADO (${routeDeviationAngle.toFixed(1)}°)`;
+          } else {
+            // Determina direção da guinada necessária
+            const localTarget = vectorToMars.clone().applyQuaternion(shipRig.quaternion.clone().invert());
+            const yawDir = localTarget.x > 0 ? "DIREITA" : "ESQUERDA";
+            const pitchDir = localTarget.y > 0 ? "SUBIR" : "DESCER";
+            guideEl.className = routeDeviationAngle > 22.0 ? 'critical' : '';
+            guideEl.innerText = `CORRIJA O MANCHE: GUINADA À ${yawDir} E ${pitchDir} (DESVIO: ${routeDeviationAngle.toFixed(1)}°)`;
+          }
+
+          // POSICIONAMENTO DA MIRA SOBRE MARTE NO PARA-BRISA
+          marsScreenPos.copy(marsWorldPos).project(camera);
+          const markerEl = document.getElementById('mars-nav-marker');
+
+          // Verifica se Marte está à frente da câmera
+          if (marsScreenPos.z < 1.0) {
+            const screenX = (marsScreenPos.x * 0.5 + 0.5) * window.innerWidth;
+            const screenY = (-(marsScreenPos.y * 0.5) + 0.5) * window.innerHeight;
+            markerEl.style.display = 'block';
+            markerEl.style.left = `${screenX}px`;
+            markerEl.style.top = `${screenY}px`;
+            document.getElementById('mars-marker-label').innerText = `MARTE // ${(distanceToMars / 1000000).toFixed(2)}M KM`;
+          } else {
+            markerEl.style.display = 'none';
+          }
+
+          // Afastamento da Terra na subida
+          earthMesh.position.y -= velocity * delta * 12;
+          earthMesh.position.z -= velocity * delta * 16;
+          launchTower.position.y -= velocity * delta * 12;
+          boardingBridge.position.y -= velocity * delta * 12;
+
+          // Tremor de cabine proporcional
+          let shake = 0.003 * throttleActual;
+          if (shake > 0) {
+            camera.position.x = pilotEyePos.x + (Math.random() - 0.5) * shake;
+            camera.position.y = pilotEyePos.y + (Math.random() - 0.5) * shake;
+            engineReflectionLight.intensity = 1.6 + Math.random() * 2.0 * throttleActual;
+          } else {
+            camera.position.copy(pilotEyePos);
+            engineReflectionLight.intensity = 0.0;
+          }
+        }
+
+        // ATUALIZAÇÃO DA TELEMETRIA
+        document.getElementById('av-dist').innerText = `${(distanceToMars / 1000000).toFixed(2)}M KM`;
+        document.getElementById('av-err').innerText = `${routeDeviationAngle.toFixed(1)}°`;
+        document.getElementById('av-vel').innerText = `${(velocity * 1000).toFixed(0)} M/S`;
+      }
+
+      // ANIMAÇÃO DA ORBE
+      if (charlesGroup.visible) {
+        charlesGroup.position.y = 1.44 + Math.sin(time * 2.5) * 0.015;
+        charlesRings.rotation.y += 0.02;
+      }
+
+      renderMFDScreens();
+      renderer.render(scene, camera);
+    });
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>

@@ -7,20 +7,34 @@ const neuralAudioCache = new Map<string, string>();
 let activeHtmlAudio: HTMLAudioElement | null = null;
 
 export const CHARLES_VOICE_LINES = {
+  VIDEO_CROSSOVER_AWAKEN:
+    'Identidade biométrica confirmada no console direito, Comandante. Sistemas Indio-OS online. Acione as chaves na ala esquerda para ignição.',
+  PALM_RESCAN_OK:
+    'Varredura biométrica da palma revalidada. Todos os barramentos da cabine estão operacionais.',
+  INTRO_STAGE_1:
+    'Base Alvorada para cápsula Indio-Um. Condições meteorológicas nominais na plataforma',
+  INTRO_STAGE_2:
+    'Pressurização de eclusa concluída. Cabine em 101.3 kilopascals',
+  INTRO_STAGE_3:
+    'Comandante na estação. Sistemas aguardando autenticação biométrica',
+  GAMEPLAY_READY:
+    'Aguardando sua palma no console direito para autenticação biométrica, Comandante',
   BIOMETRIC_OK:
-    'Identidade biométrica confirmada, Professor. Sou o Charles, seu copiloto de voo. Sistemas online. Janela de transferência para Marte aberta.',
+    'Identidade confirmada, Professor. Sistemas de rota conectados. Trajetória calculada para Marte',
   LOCKED_WARN:
-    'Atenção: É necessário desbloquear os sistemas no leitor biométrico antes da partida.',
+    'Atenção: Destrave os sistemas no leitor biométrico à direita primeiro',
   COVER_WARN:
-    'Aviso de segurança: Abra a proteção vermelha antes de comandar a ignição.',
+    'Abra a proteção vermelha na ala esquerda antes de comandar a ignição',
   SWITCH_WARN:
     'Atenção Professor: Arme as chaves de Aviônicos e Controle de Reação antes da ignição.',
   IGNITION_START:
-    'Ignição confirmada, Professor. Câmaras em pressão nominal. Iniciando perfil de subida para Marte.',
-  MAX_Q:
-    'Entrando no envelope de Max-Q. Pressão dinâmica no pico estrutural.',
-  ORBIT_MECO:
-    'Corte de motores confirmado. Órbita estacionária estabelecida. Flutuação de gravidade zero confirmada na cabine.',
+    'Ignição confirmada! Deixando a plataforma no amanhecer. Mantenha o manche central alinhado com o retículo de Marte',
+  ROUTE_DEVIATION_WARN:
+    'Atenção: Desvio grave de rota. Traga o manche na direção da mira de Marte para não perder a trajetória',
+  ROUTE_ALIGNED_OK:
+    'Vetor perfeitamente alinhado. Injeção trans-marciana nominal',
+  LOST_ORBIT:
+    'Atenção crítica: Combustível esgotado fora da janela de transferência. Entramos em deriva permanente no vácuo',
 };
 
 export const SoundSystem = {
