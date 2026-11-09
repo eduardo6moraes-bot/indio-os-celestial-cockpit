@@ -1,0 +1,6 @@
+{
+  "name": "Mundo Celestial - Jornada Orbital",
+  "description": "Ultra-realistic first-person aerospace simulation game featuring biometric startup, real-time MFD telemetry, Charles AI copilot, and interactive spacecraft controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
