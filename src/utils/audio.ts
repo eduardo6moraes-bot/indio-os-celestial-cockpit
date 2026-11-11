@@ -8,33 +8,31 @@ let activeHtmlAudio: HTMLAudioElement | null = null;
 
 export const CHARLES_VOICE_LINES = {
   VIDEO_CROSSOVER_AWAKEN:
-    'Identidade biométrica confirmada no console direito, Comandante. Sistemas Indio-OS online. Acione as chaves na ala esquerda para ignição.',
+    'Saudações, Comandante. Eu sou Charles, a inteligência holográfica da nave Celestial Um. Biometria confirmada. O corredor orbital para Marte já está projetado à sua frente. Acione a ignição à esquerda para decolar.',
   PALM_RESCAN_OK:
-    'Varredura biométrica da palma revalidada. Todos os barramentos da cabine estão operacionais.',
-  INTRO_STAGE_1:
-    'Base Alvorada para cápsula Indio-Um. Condições meteorológicas nominais na plataforma',
-  INTRO_STAGE_2:
-    'Pressurização de eclusa concluída. Cabine em 101.3 kilopascals',
-  INTRO_STAGE_3:
-    'Comandante na estação. Sistemas aguardando autenticação biométrica',
-  GAMEPLAY_READY:
-    'Aguardando sua palma no console direito para autenticação biométrica, Comandante',
-  BIOMETRIC_OK:
-    'Identidade confirmada, Professor. Sistemas de rota conectados. Trajetória calculada para Marte',
-  LOCKED_WARN:
-    'Atenção: Destrave os sistemas no leitor biométrico à direita primeiro',
+    'Biometria confirmada, Comandante. Todos os sistemas de navegação e suporte à vida estão operacionais.',
   COVER_WARN:
-    'Abra a proteção vermelha na ala esquerda antes de comandar a ignição',
-  SWITCH_WARN:
-    'Atenção Professor: Arme as chaves de Aviônicos e Controle de Reação antes da ignição.',
+    'Comandante, abra a capa vermelha na ala esquerda ou clique em Decolar para iniciar a propulsão.',
   IGNITION_START:
-    'Ignição confirmada! Deixando a plataforma no amanhecer. Mantenha o manche central alinhado com o retículo de Marte',
+    'Ignição principal confirmada! Deixando a plataforma terrestre. Siga os anéis luminosos da rota espacial pelo para-brisa rumo a Marte.',
+  HIGHWAY_CRUISE:
+    'Velocidade de cruzeiro interplanetário atingida. Mantenha a nave dentro dos pórticos holográficos da rota para aproximação rápida de Marte.',
+  MARS_APPROACH:
+    'Atenção Comandante: Orbita de Marte alcançada! Iniciando entrada atmosférica e acionando retrofoguetes para descida na Base Logística Ares Um.',
+  MARS_LANDED:
+    'Pouso confirmado em solo marciano! Bem-vindo à Base Ares Um, Comandante. Inicie agora o protocolo de logística: conecte o umbilical, envie o Rover de carga e ative a usina de oxigênio.',
+  LOGISTICS_UMBILICAL:
+    'Braço umbilical conectado e eclusa pressurizada. Energia da Base Ares Um estabilizada.',
+  LOGISTICS_ROVER:
+    'Rover autônomo de carga enviado pela estrada marciana até o Domo Central de Suprimentos.',
+  LOGISTICS_ISRU:
+    'Matriz solar e extrator de oxigênio e metano ativados em solo marciano. Tanques da nave reabastecidos em cem por cento.',
+  LOGISTICS_COMPLETE:
+    'Operação logística em Marte concluída com sucesso total, Comandante! A colônia Ares Um está abastecida e pronta para expansão.',
   ROUTE_DEVIATION_WARN:
-    'Atenção: Desvio grave de rota. Traga o manche na direção da mira de Marte para não perder a trajetória',
+    'Atenção Comandante: Você está saindo da estrada espacial. Alinhe o manche com os anéis luminosos de Marte.',
   ROUTE_ALIGNED_OK:
-    'Vetor perfeitamente alinhado. Injeção trans-marciana nominal',
-  LOST_ORBIT:
-    'Atenção crítica: Combustível esgotado fora da janela de transferência. Entramos em deriva permanente no vácuo',
+    'Trajetória perfeitamente alinhada no corredor orbital de Marte.',
 };
 
 export const SoundSystem = {
@@ -302,7 +300,7 @@ export const SoundSystem = {
     this.rocketGain.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.8);
   },
 
-  // Protocolo de Transmissão Aeroespacial do Charles (Neural TTS + Quindar Tones)
+  // Protocolo de Transmissão Aeroespacial do Charles (Voz Neural + Ressonância Zordon + Quindar)
   async transmitCharles(
     msg: string,
     onBannerUpdate: (text: string) => void,
@@ -311,7 +309,10 @@ export const SoundSystem = {
     this.init();
     onBannerUpdate(msg);
 
-    if (this.isMuted) return;
+    if (this.isMuted) {
+      onSpeakingState?.(false);
+      return;
+    }
 
     this.playQuindarTone(true);
     onSpeakingState?.(true);
@@ -332,7 +333,7 @@ export const SoundSystem = {
           audio.onended = () => {
             activeHtmlAudio = null;
             onSpeakingState?.(false);
-            setTimeout(() => this.playQuindarTone(false), 90);
+            setTimeout(() => this.playQuindarTone(false), 80);
             resolve(true);
           };
           audio.onerror = () => {
@@ -353,10 +354,10 @@ export const SoundSystem = {
       if (ok) return;
     }
 
-    // 2. Tenta buscar voz neural humana do servidor (/api/tts)
+    // 2. Busca rápida da voz neural (timeout curto de 1100ms para nunca atrasar a fala)
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 3800);
+      const timeout = setTimeout(() => controller.abort(), 1100);
       const res = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -374,10 +375,10 @@ export const SoundSystem = {
         }
       }
     } catch {
-      //Prossegue para síntese local aprimorada caso offline
+      // Fallback imediato para síntese local caso a rede demore
     }
 
-    // 3. Fallback: Seleciona a voz mais natural disponível no sistema (Google / Microsoft Natural pt-BR)
+    // 3. Voz imediata do navegador (timbre imponente estilo Zordon pt-BR)
     if ('speechSynthesis' in window) {
       try {
         const utter = new SpeechSynthesisUtterance(msg);
@@ -385,23 +386,32 @@ export const SoundSystem = {
         const voices = window.speechSynthesis.getVoices();
         const ptVoices = voices.filter((v) => v.lang.toLowerCase().includes('pt'));
         const preferredVoice =
-          ptVoices.find((v) => /natural|neural|google|antonio|francisca|luciana/i.test(v.name)) ||
+          ptVoices.find((v) => /natural|neural|google|antonio|felipe|daniel|luciana/i.test(v.name)) ||
           ptVoices[0];
         if (preferredVoice) {
           utter.voice = preferredVoice;
         }
-        utter.rate = 1.0;
-        utter.pitch = 0.94;
+        utter.rate = 1.02;
+        utter.pitch = 0.85;
         utter.onend = () => {
           onSpeakingState?.(false);
-          setTimeout(() => this.playQuindarTone(false), 100);
+          setTimeout(() => this.playQuindarTone(false), 90);
+        };
+        utter.onerror = () => {
+          onSpeakingState?.(false);
         };
         window.speechSynthesis.speak(utter);
+
+        // Garante que o estado de fala encerre mesmo se onend não disparar em mobile WebViews
+        const estimatedMs = Math.max(2500, msg.length * 68);
+        setTimeout(() => {
+          onSpeakingState?.(false);
+        }, estimatedMs);
       } catch {
         onSpeakingState?.(false);
       }
     } else {
-      onSpeakingState?.(false);
+      setTimeout(() => onSpeakingState?.(false), 3000);
     }
   },
 };
